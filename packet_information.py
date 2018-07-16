@@ -32,7 +32,7 @@ cmap = mcolors.LinearSegmentedColormap(
 numberOfScans = int(subprocess.check_output("ls /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
 numberOfBanks = 3
 numberOfNodes = 8
-NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+NETBUFST_waterfall = np.zeros((numberOfScans, numberOfBanks*numberOfNodes))
 
 ################################################################################
 ### NETBUFST
@@ -40,11 +40,14 @@ NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 for bank in range(numberOfBanks):
     for node in range(numberOfNodes):
         NETBUFST_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/AGBT18A_999_77/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk '{ total += $1} END {print total/NR}'; done"""
-        NETBUFST_waterfall[(bank*numberOfNodes + node),:] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
+        NETBUFST_waterfall[:,(bank*numberOfNodes + node)] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
 
+plt.title("Average Location in Memory Ring Buffer Per Scan")
 plt.imshow(NETBUFST_waterfall, cmap = cmap)
 plt.colorbar()
 plt.clim(0,24)
+plt.ylabel("Scan")
+plt.xlabel("Compute Node")
 plt.show()
 ################################################################################
 ### NDROP
