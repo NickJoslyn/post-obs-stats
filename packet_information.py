@@ -24,8 +24,8 @@ NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 ################################################################################
 ### NETBUFST
 
-for bank in numberOfBanks:
-    for node in numberOfNodes:
+for bank in range(numberOfBanks):
+    for node in range(numberOfNodes):
         NETBUFST_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/AGBT18A_999_77/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk '{ total += $1} END {print total/NR}'; done"""
         NETBUFST_waterfall[(bank*numberOfNodes + node),:] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
 
