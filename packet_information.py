@@ -13,6 +13,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
+import matplotlib.colors as mcolors
+
+cdict = {'red':   ((0.0, 0.0, 0.0),
+                   (0.5, 0.0, 0.0),
+                   (1.0, 1.0, 1.0)),
+         'blue':  ((0.0, 0.0, 0.0),
+                   (1.0, 0.0, 0.0)),
+         'green': ((0.0, 0.0, 1.0),
+                   (0.5, 0.0, 0.0),
+                   (1.0, 0.0, 0.0))}
+
+cmap = mcolors.LinearSegmentedColormap(
+'my_colormap', cdict, 100)
 
 ## Locations == /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00
 
@@ -29,7 +42,7 @@ for bank in range(numberOfBanks):
         NETBUFST_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/AGBT18A_999_77/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk '{ total += $1} END {print total/NR}'; done"""
         NETBUFST_waterfall[(bank*numberOfNodes + node),:] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
 
-plt.imshow(NETBUFST_waterfall)
+plt.imshow(NETBUFST_waterfall, cmap = cmap)
 plt.colorbar()
 plt.clim(0,24)
 plt.show()
