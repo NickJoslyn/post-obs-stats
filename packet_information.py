@@ -58,6 +58,7 @@ plt.show()
 ################################################################################
 ### NDROP
 
+/usr/bin/fold -w80 blc25_guppi_58278_48600_HIP1086_0046.gpuspec..headers | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print total/NR}'
 
 
 
