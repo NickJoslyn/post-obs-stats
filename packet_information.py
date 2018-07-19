@@ -29,7 +29,7 @@ cmap = mcolors.LinearSegmentedColormap(
 
 ## Locations == /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00
 
-numberOfScans = int(subprocess.check_output("ls /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
+numberOfScans = int(subprocess.check_output("ls /mnt_blc00/datax/dibas/AGBT18A_999_73/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
 numberOfBanks = 3
 numberOfNodes = 8
 NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
@@ -39,14 +39,14 @@ NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 computeNodeNames = []
 for bank in range(numberOfBanks):
     for node in range(numberOfNodes):
-        NETBUFST_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/AGBT18A_999_77/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk 'BEGIN {max = 0} {if ($1 > max) max = $1} END {print max}'; done"""
+        NETBUFST_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/AGBT18A_999_73/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk 'BEGIN {max = 0} {if ($1 > max) max = $1} END {print max}'; done"""
         NETBUFST_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
         computeNodeNames.append('blc' + str(bank) + str(node))
 
-scanName_command = """ls /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
+scanName_command = """ls /mnt_blc00/datax/dibas/AGBT18A_999_73/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
 scanNames = subprocess.check_output(scanName_command,shell=True).split('\n')
 
-plt.title("Max Location in Memory Ring Buffer: AGBT18A_999_77")
+plt.title("Max Location in Memory Ring Buffer: AGBT18A_999_73")
 plt.imshow(NETBUFST_waterfall, cmap = cmap)
 plt.colorbar()
 plt.clim(0,24)
@@ -54,12 +54,12 @@ plt.clim(0,24)
 #plt.xlabel("Compute Node")
 plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
 plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+plt.tight_layout()
 plt.show()
 ################################################################################
 ### NDROP
 
-#/usr/bin/fold -w80 blc25_guppi_58278_48600_HIP1086_0046.gpuspec..headers | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print total/NR}'
-
+#/usr/bin/fold -w80 blc25_guppi_58278_48600_HIP1086_0046.gpuspec..headers | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'
 
 
 
