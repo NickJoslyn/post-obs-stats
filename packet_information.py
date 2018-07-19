@@ -58,11 +58,22 @@ plt.tight_layout()
 plt.show()
 ################################################################################
 ### NDROP
+NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+for bank in range(numberOfBanks):
+    for node in range(numberOfNodes):
+        NDROP_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/AGBT18A_999_73/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
+        NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
 
-#/usr/bin/fold -w80 blc25_guppi_58278_48600_HIP1086_0046.gpuspec..headers | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'
-
-
-
+plt.title("Percentage of Packets Dropped: AGBT18A_999_73")
+plt.imshow(NDROP_waterfall, cmap = cmap)
+plt.colorbar()
+plt.clim(0,100)
+#plt.ylabel("Source")
+#plt.xlabel("Compute Node")
+plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
+plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+plt.tight_layout()
+plt.show()
 
 ################################################################################
 ### PKTIDX
