@@ -81,6 +81,22 @@ plt.show()
 
 ################################################################################
 ### PKTIDX
+PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+for bank in range(numberOfBanks):
+    for node in range(numberOfNodes):
+        PKTIDX_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/AGBT18A_999_77/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | tail -n +3 | awk 'BEGIN{sum=0}{sum += $1 * ($2/16384 - 1)} END {print sum}'; done"""
+	PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
+
+plt.title("Number of Blocks Dropped: AGBT18A_999_77")
+plt.imshow(PKTIDX_waterfall, cmap = cmap)
+plt.colorbar()
+#plt.clim(0,100)
+#plt.ylabel("Source")
+#plt.xlabel("Compute Node")
+plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
+plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+plt.tight_layout()
+plt.show()
 
 
 
