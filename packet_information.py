@@ -31,7 +31,7 @@ cmap = mcolors.LinearSegmentedColormap(
 
 numberOfBanks = 3
 numberOfNodes = 8
-SESSION_IDENTIFIER = "AGBT18A_999_73"
+SESSION_IDENTIFIER = "AGBT18A_999_117"
 
 numberOfScans = int(subprocess.check_output("ls /mnt_blc00/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
 
