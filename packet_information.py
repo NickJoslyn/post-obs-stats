@@ -86,7 +86,7 @@ PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 for bank in range(numberOfBanks):
     for node in range(numberOfNodes):
         PKTIDX_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
-	PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
+        PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
 
 plt.title("Percentage of Blocks Dropped: " + SESSION_IDENTIFIER)
 plt.imshow(PKTIDX_waterfall, cmap = cmap)
