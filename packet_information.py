@@ -70,7 +70,7 @@ timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + "
 timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
 plt.figure(figsize=(12,10))
-plt.title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
+plt.suptitle("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
 plt.imshow(NETBUFST_waterfall, cmap = cmap)
 plt.colorbar()
 plt.clim(0,24)
