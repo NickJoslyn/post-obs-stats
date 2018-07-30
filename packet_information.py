@@ -64,7 +64,10 @@ for bank in range(numberOfBanks):
         computeNodeNames.append('blc' + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
 scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
-scanNames = subprocess.check_output(scanName_command,shell=True).split('\n')
+scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
+
+timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
+timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
 plt.figure(figsize=(12,10))
 plt.title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
@@ -73,8 +76,13 @@ plt.colorbar()
 plt.clim(0,24)
 
 plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
+plt.tick_params(labelright = True, right = True)
 plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
-plt.tick_params(labelright = True, tick2On = True)
+
+tempAxis = plt.twiny()
+tempAxis.set_xticks(np.arange(numberOfScans))
+tempAxis.set_xticklabels(timeStamps, rotation = 90)
+
 plt.tight_layout()
 plt.savefig("testfinal.png", bbox_inches = 'tight')
 plt.show()
