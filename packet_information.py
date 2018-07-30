@@ -3,13 +3,6 @@
 
 # Program to produce plots regarding NETBUFST, NDROP, and PKTIDX from reduced files
 
-## /usr/bin/fold -w80 blc24_guppi_*0026.gpuspec..headers | grep PKTIDX | awk '{print $3-p;p=$3}' | sort | uniq -c | tail -n +3 | awk '{sum+= $1 * ($2/16384-1)}END{print sum}'
-
-## for i in *.gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3-p;p=$3}' | sort | uniq -c | tail -n +3 | awk '{sum+= $1 * ($2/16384-1)}END{print sum}' ; done
-## for i in *.gpuspec..headers; do echo "$i" ; /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print $2}' | awk '{print substr($1,2,1)}' | sort | uniq -c; done
-## for i in *.gpuspec..headers; do echo "$i" ; /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print $2}' | awk '{if(substr($1,2,1) ~ /^[2-9]+$/) print substr($1,2,1)}' | sort | uniq -c | awk '{print $1}'; done
-## for i in *.gpuspec..headers; do echo "$i" ; /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print $2}' | awk '{if(substr($1,2,1) == 0 || substr($1,2,1) == 1) print substr($1,2,1)}' | sort | uniq -c | awk '{print $1}'; done
-
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
@@ -27,13 +20,21 @@ cdict = {'red':   ((0.0, 0.0, 0.0),
 cmap = mcolors.LinearSegmentedColormap(
 'my_colormap', cdict, 100)
 
-## Locations == /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00
+numberOfNodes
+TOTAL_COMPUTE_NODES = ['00', '01', '02', '03', '04', '05', '06', '07', '10', '11', '12', '13', '14', '15', '16', '17', '18', '20', '21', '22', '23', '24', '25', '26', '27', '30', '31', '32', '33', '34', '35', '36', '37']
+ACTIVE_COMPUTE_NODES = []
+SESSION_IDENTIFIER = "AGBT18A_999_122"
 
-numberOfBanks = 3
-numberOfNodes = 8
-SESSION_IDENTIFIER = "AGBT18A_999_117"
+for i in TOTAL_COMPUTE_NODES:
+    temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/dibas/*", shell = True).split()
+    if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas/' + SESSION_IDENTIFIER))):
+        ACTIVE_COMPUTE_NODES.append(i)
 
-numberOfScans = int(subprocess.check_output("ls /mnt_blc00/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
+ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
+
+numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
+
+numberOfBanks = ACTIVE_COMPUTE_NODES.shape[0]
 
 NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 
@@ -42,11 +43,11 @@ NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 computeNodeNames = []
 for bank in range(numberOfBanks):
     for node in range(numberOfNodes):
-        NETBUFST_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk 'BEGIN {max = 0} {if ($1 > max) max = $1} END {print max}'; done"""
+        NETBUFST_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk 'BEGIN {max = 0} {if ($1 > max) max = $1} END {print max}'; done"""
         NETBUFST_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
-        computeNodeNames.append('blc' + str(bank) + str(node))
+        computeNodeNames.append('blc' + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-scanName_command = """ls /mnt_blc00/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
+scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
 scanNames = subprocess.check_output(scanName_command,shell=True).split('\n')
 
 plt.title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
@@ -64,7 +65,7 @@ plt.show()
 NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 for bank in range(numberOfBanks):
     for node in range(numberOfNodes):
-        NDROP_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
+        NDROP_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
         NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
 
 plt.title("Percentage of Packets Dropped: " + SESSION_IDENTIFIER)
@@ -85,7 +86,7 @@ plt.show()
 PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 for bank in range(numberOfBanks):
     for node in range(numberOfNodes):
-        PKTIDX_command = """for i in /mnt_blc""" + str(bank) + str(node) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
+        PKTIDX_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
         PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
 
 plt.title("Percentage of Blocks Dropped: " + SESSION_IDENTIFIER)
@@ -98,20 +99,3 @@ plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
 plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
 plt.tight_layout()
 plt.show()
-
-
-
-
-
-
-# Gets the NETBUFST value
-#/usr/bin/fold -w80 blc00_guppi_58278_52387_HIP1125_0057.gpuspec..headers | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}'
-
-# Gets the average NETBUFST value
-#/usr/bin/fold -w80 blc00_guppi_58278_52387_HIP1125_0057.gpuspec..headers | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk '{ total += $1} END {print total/NR}'
-
-# blc00:
-# test = """/usr/bin/fold -w80 /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00/blc00_guppi_58278_52387_HIP1125_0057.gpuspec..headers | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk '{ total += $1} END {print total/NR}'"""
-# float(subprocess.check_output(test, shell = True)[:-1])
-
-### full : for i in /mnt_blc00/datax/dibas/AGBT18A_999_77/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk '{ total += $1} END {print total/NR}'; done
