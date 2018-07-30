@@ -18,7 +18,7 @@ cdict = {'red':   ((0.0, 0.0, 0.0),
                    (1.0, 0.0, 0.0))}
 
 cdict2 = {'red':   ((0.0, 0.0, 0.0),
-                   (0.5, 0.5, 0.5),
+                   (0.5, 0.6, 0.6),
                    (1.0, 1.0, 1.0)),
          'blue':  ((0.0, 0.0, 0.0),
                    (1.0, 0.0, 0.0)),
@@ -66,16 +66,22 @@ for bank in range(numberOfBanks):
 scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
 scanNames = subprocess.check_output(scanName_command,shell=True).split('\n')
 
-plt.title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
-plt.imshow(NETBUFST_waterfall, cmap = cmap)
-plt.colorbar()
-plt.clim(0,24)
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+ax1.title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
+ax1.imshow(NETBUFST_waterfall, cmap = cmap)
+ax1.colorbar()
+ax1.clim(0,24)
 #plt.ylabel("Source")
 #plt.xlabel("Compute Node")
-plt.tick_params(labelright = True)
-plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
-plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
+ax1.set_xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+ax2 = ax1.twinx()
+ax2.set_yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
+ax3 = ax1.twiny()
+ax3.set_xticks(np.arange(numberOfScans), scanNames, rotation = 90)
 plt.tight_layout()
+#plt.savefig("testNDROP.png")
 plt.show()
 ################################################################################
 ### NDROP
