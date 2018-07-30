@@ -68,7 +68,7 @@ scanNames = subprocess.check_output(scanName_command,shell=True).split('\n')
 
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
-ax1.title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
+ax1.set_title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
 ax1.imshow(NETBUFST_waterfall, cmap = cmap)
 ax1.colorbar()
 ax1.clim(0,24)
