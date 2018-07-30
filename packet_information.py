@@ -66,17 +66,17 @@ for bank in range(numberOfBanks):
 scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
 scanNames = subprocess.check_output(scanName_command,shell=True).split('\n')
 
-plt.figure()
-plt.imshow("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
+plt.figure(figsize=(12,10))
+plt.title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
 plt.imshow(NETBUFST_waterfall, cmap = cmap)
 plt.colorbar()
 plt.clim(0,24)
 
 plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
 plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
-
+plt.tick_params(labelright = True)
 plt.tight_layout()
-plt.savefig("testNDROP.png")
+plt.savefig("testfinal.png", bbox_inches = 'tight')
 plt.show()
 ################################################################################
 ### NDROP
