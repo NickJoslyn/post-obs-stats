@@ -83,7 +83,7 @@ tempAxis = plt.twiny()
 tempAxis.set_xticks(np.arange(numberOfScans))
 tempAxis.set_xticklabels(timeStamps, rotation = 90)
 
-plt.tight_layout()
+plt.tight_layout(rect=[0, 0.03, 1, 0.90])
 plt.savefig("testfinal.png", bbox_inches = 'tight')
 plt.show()
 ################################################################################
