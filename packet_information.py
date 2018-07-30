@@ -47,6 +47,7 @@ for bank in range(numberOfBanks):
         try:
             NETBUFST_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
         except:
+            NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
             print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
         computeNodeNames.append('blc' + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
@@ -72,6 +73,7 @@ for bank in range(numberOfBanks):
         try:
             NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
         except:
+            NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
             print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
 plt.title("Percentage of Packets Dropped: " + SESSION_IDENTIFIER)
@@ -96,8 +98,9 @@ for bank in range(numberOfBanks):
         try:
             PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
         except:
+            PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
             print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
-            
+
 plt.title("Percentage of Blocks Dropped: " + SESSION_IDENTIFIER)
 plt.imshow(PKTIDX_waterfall, cmap = cmap)
 plt.colorbar()
