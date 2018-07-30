@@ -78,9 +78,10 @@ plt.clim(0,24)
 plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
 plt.tick_params(labelright = True, right = True)
 plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+mainAxisLims = plt.xlim()
 
 tempAxis = plt.twiny()
-tempAxis.set_xlim(0,(numberOfScans-1))
+tempAxis.set_xlim(mainAxisLims)
 tempAxis.set_xticks(np.arange(numberOfScans))
 tempAxis.set_xticklabels(timeStamps, rotation = 90)
 
