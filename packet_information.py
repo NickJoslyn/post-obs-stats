@@ -69,23 +69,28 @@ scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
 timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
 timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
-plt.figure(figsize=(12,10))
+fig = plt.figure(figsize=(12,10))
+ax1 = fig.add_subplot(111)
 plt.suptitle("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
-plt.imshow(NETBUFST_waterfall, cmap = cmap)
-plt.colorbar()
+im = ax1.imshow(NETBUFST_waterfall, cmap = cmap)
+plt.colorbar(im)
 plt.clim(0,24)
 
-plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
-plt.tick_params(labelright = True, right = True)
-plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
+ax1.set_yticklabels(computeNodeNames)
+ax1.set_xticks(np.arange(numberOfScans))
+ax1.set_xticklables(scanNames, rotation = 90)
+ax1.tick_params(labelright = True, right = True)
 
-ax = plt.gca()
-ax2 = ax.twiny()
-
-ax2.set_xlim(ax.get_xlim())
+ax2 = fig.add_axes(ax1.get_position(), frameon = False)
+ax2.tick_params(labelbottom = 'off', labeltop = 'on', labelleft = 'off', labelright = 'off', bottom = 'off', left = 'off', right = 'off')
+ax2.set_xlim(ax1.get_xlim())
 ax2.set_xticks(np.arange(numberOfScans))
 ax2.set_xticklabels(timeStamps, rotation = 90)
 
+plt.draw()
+ax2.set_position(ax1.get_position())
+plt.draw()
 plt.tight_layout(rect=[0, 0.03, 1, 0.90])
 plt.savefig("testfinal.png", bbox_inches = 'tight')
 plt.show()
