@@ -66,25 +66,17 @@ for bank in range(numberOfBanks):
 scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
 scanNames = subprocess.check_output(scanName_command,shell=True).split('\n')
 
-fig = plt.figure()
-ax1 = fig.add_subplot(111)
-ax1.set_title("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
-tempCB = ax1.imshow(NETBUFST_waterfall, cmap = cmap)
-plt.colorbar(tempCB)
-tempCB.set_clim(0,24)
-#plt.ylabel("Source")
-#plt.xlabel("Compute Node")
-ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
-ax1.set_yticklabels(computeNodeNames)
-ax1.set_xticks(np.arange(numberOfScans))
-ax1.set_xticklabels(scanNames, rotation = 90)
-ax2 = ax1.twinx()
-ax2.set_yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
-# ax3 = ax1.twiny()
-# ax3.set_xticks(np.arange(numberOfScans))
-# ax3.set_xticklabels(scanNames, rotation = 90)
+plt.figure()
+plt.imshow("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
+plt.imshow(NETBUFST_waterfall, cmap = cmap)
+plt.colorbar()
+plt.clim(0,24)
+
+plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
+plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
+
 plt.tight_layout()
-#plt.savefig("testNDROP.png")
+plt.savefig("testNDROP.png")
 plt.show()
 ################################################################################
 ### NDROP
