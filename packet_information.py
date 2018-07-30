@@ -20,7 +20,7 @@ cdict = {'red':   ((0.0, 0.0, 0.0),
 cmap = mcolors.LinearSegmentedColormap(
 'my_colormap', cdict, 100)
 
-numberOfNodes
+numberOfNodes = 8
 TOTAL_COMPUTE_NODES = ['00', '01', '02', '03', '04', '05', '06', '07', '10', '11', '12', '13', '14', '15', '16', '17', '18', '20', '21', '22', '23', '24', '25', '26', '27', '30', '31', '32', '33', '34', '35', '36', '37']
 ACTIVE_COMPUTE_NODES = []
 SESSION_IDENTIFIER = "AGBT18A_999_122"
