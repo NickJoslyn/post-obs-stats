@@ -74,7 +74,7 @@ plt.clim(0,24)
 
 plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
 plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
-plt.tick_params(labelright = True)
+plt.tick_params(labelright = True, tick2On = True)
 plt.tight_layout()
 plt.savefig("testfinal.png", bbox_inches = 'tight')
 plt.show()
