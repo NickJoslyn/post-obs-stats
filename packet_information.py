@@ -80,6 +80,7 @@ plt.tick_params(labelright = True, right = True)
 plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
 
 tempAxis = plt.twiny()
+tempAxis.set_xlim(0,(numberOfScans-1))
 tempAxis.set_xticks(np.arange(numberOfScans))
 tempAxis.set_xticklabels(timeStamps, rotation = 90)
 
