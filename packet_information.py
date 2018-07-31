@@ -55,7 +55,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     #clb.ax.set_title("blc max = 24\nblc min = 0")
     im.set_clim(0,topClim)
     textForPlot = "Max: blc" + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
-    ax1.text(1.1, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
+    ax1.text(1, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
 
     ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
     ax1.set_yticklabels(computeNodeNames)
