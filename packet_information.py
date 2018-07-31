@@ -6,7 +6,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+#from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.colors as mcolors
 
 cdict = {'red':   ((0.0, 0.0, 0.0),
@@ -71,12 +71,13 @@ timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + "
 timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
 fig = plt.figure(figsize=(12,10))
+plt.gcf().subplots_adjust(bottom = 0.2)
 ax1 = fig.add_subplot(111)
 plt.suptitle("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
 im = ax1.imshow(NETBUFST_waterfall, cmap = cmap)
-divider = make_axes_locatable(ax1)
-cax = divider.append_axes('right', size = '5%', pad = 5)
-plt.colorbar(im, cax=cax4, orientation = 'vertical')
+#divider = make_axes_locatable(ax1)
+#cax = divider.append_axes('right', size = '5%', pad = 0.5)
+plt.colorbar(im, fraction = 0.025, pad = 0.09)
 im.set_clim(0,24)
 
 ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
@@ -85,6 +86,8 @@ ax1.set_xticks(np.arange(numberOfScans))
 ax1.set_xticklabels(scanNames, rotation = 90)
 ax1.tick_params(labelright = True, right = True, top = True, labeltop = False)
 
+#plt.tight_layout(rect = [0, 0.03, 1, 0.85])
+
 ax2 = fig.add_axes(ax1.get_position(), frameon = False)
 ax2.tick_params(labelbottom = 'off', top = 'off', labeltop = 'on', labelleft = 'off', labelright = 'off', bottom = 'off', left = 'off', right = 'off')
 ax2.set_xlim(ax1.get_xlim())
@@ -92,10 +95,11 @@ ax2.set_xticks(np.arange(numberOfScans))
 ax2.set_xticklabels(timeStamps, rotation = 90)
 
 plt.draw()
-ax2.set_position(ax1.get_position())
+pos1 = ax1.get_position()
+ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
 plt.draw()
 #plt.tight_layout(rect=[0, 0.03, 1, 0.90])
-#plt.savefig("testfinal.png", bbox_inches = 'tight')
+plt.savefig("testfinal.png", bbox_inches = 'tight')
 plt.show()
 ################################################################################
 ### NDROP
