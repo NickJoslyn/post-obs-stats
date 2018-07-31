@@ -41,8 +41,10 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     ax1 = fig.add_subplot(111)
     plt.suptitle(title_identifier + SESSION_IDENTIFIER)
     im = ax1.imshow(packet_data, cmap = colormap)
-    plt.colorbar(im, fraction = 0.025, pad = 0.09)
+    clb = plt.colorbar(im, fraction = 0.025, pad = 0.09)
+    #clb.ax.set_title("blc max = 24\nblc min = 0")
     im.set_clim(0,topClim)
+    ax1.text(1.1, 1.1, "Max: \n Min: \n Average: \n d \n ls ", verticalalignment = 'center', transform = ax1.transAxes)    
 
     ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
     ax1.set_yticklabels(computeNodeNames)
@@ -60,6 +62,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     pos1 = ax1.get_position()
     ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
     plt.draw()
+    plt.show()
     plt.savefig((type_to_plot + "/" + str(SESSION_IDENTIFIER) + "_" + type_to_plot + ".png"), bbox_inches = 'tight')
     plt.close()
 
