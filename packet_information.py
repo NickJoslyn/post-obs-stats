@@ -6,7 +6,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
-#from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.colors as mcolors
 
 cdict = {'red':   ((0.0, 0.0, 0.0),
@@ -55,7 +54,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     #clb.ax.set_title("blc max = 24\nblc min = 0")
     im.set_clim(0,topClim)
     textForPlot = "Max: " + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
-    ax1.text(1.04, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
+    ax1.text(1.02, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
 
     ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
     ax1.set_yticklabels(computeNodeNames)
@@ -73,7 +72,6 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     pos1 = ax1.get_position()
     ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
     plt.draw()
-    plt.show()
     plt.savefig((type_to_plot + "/" + str(SESSION_IDENTIFIER) + "_" + type_to_plot + ".png"), bbox_inches = 'tight')
     plt.close()
 
