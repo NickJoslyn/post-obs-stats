@@ -60,7 +60,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     pos1 = ax1.get_position()
     ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
     plt.draw()
-    plt.savefig((type_to_plot + "/" + str(SESSION_IDENTIFIER) + ".png"), bbox_inches = 'tight')
+    plt.savefig((type_to_plot + "/" + str(SESSION_IDENTIFIER) + "_" + type_to_plot + ".png"), bbox_inches = 'tight')
     plt.close()
 
 
