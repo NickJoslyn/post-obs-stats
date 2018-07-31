@@ -33,8 +33,16 @@ cmap2 = mcolors.LinearSegmentedColormap('my_colormap', cdict2, 100)
 
 TOTAL_COMPUTE_NODES = ['00', '01', '02', '03', '04', '05', '06', '07', '10', '11', '12', '13', '14', '15', '16', '17', '18', '20', '21', '22', '23', '24', '25', '26', '27', '30', '31', '32', '33', '34', '35', '36', '37']
 
-def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, topClim):
-    global numberOfBanks, numberOfNodes, computeNodeNames, numberOfScans, scanNames, timeStamps
+def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, topClim, dangerLim, criticalLim):
+    global totalLength, numberOfBanks, numberOfNodes, computeNodeNames, numberOfScans, scanNames, timeStamps
+
+    maxindex1 = np.unravel_index(np.argmax(packet_data, axis=None), packet_data.shape)[0]
+    maxindex2 = np.unravel_index(np.argmax(packet_data, axis=None), packet_data.shape)[1]
+
+    maxNode = ACTIVE_COMPUTE_NODES[maxindex1, maxindex2]
+    maxValue = packet_data[maxindex1, maxindex2]
+    numberOfDanger = round(100*(len(np.where(packet_data > dangerLim)[0])/totalLength),2)
+    numberOfCritical = round(100*(len(np.where(packet_data > criticalLim)[0])/totalLength),2)
 
     fig = plt.figure(figsize=(12,10))
     plt.gcf().subplots_adjust(bottom = 0.2)
@@ -44,7 +52,8 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     clb = plt.colorbar(im, fraction = 0.025, pad = 0.09)
     #clb.ax.set_title("blc max = 24\nblc min = 0")
     im.set_clim(0,topClim)
-    ax1.text(1.1, 1.1, "Max: \n Min: \n Average: \n d \n ls ", verticalalignment = 'center', transform = ax1.transAxes)    
+    textForPlot = "Max: blc" + str(maxNode) + " | " + str(maxValue) + "\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%" 
+    ax1.text(1.1, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
 
     ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
     ax1.set_yticklabels(computeNodeNames)
@@ -96,6 +105,8 @@ if __name__ == "__main__":
     timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
     timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
+    totalLength = numberOfBanks * numberOfNodes * numberOfScans
+
     ################################################################################
     ### NETBUFST
     NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
@@ -110,7 +121,7 @@ if __name__ == "__main__":
                 NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                 print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-    plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24)
+    plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24, 12, 20)
 
     ################################################################################
     ### NDROP
@@ -125,7 +136,7 @@ if __name__ == "__main__":
                 NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                 print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-    plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100)
+    plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
 
     ################################################################################
     ### PKTIDX
@@ -140,4 +151,4 @@ if __name__ == "__main__":
                 PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                 print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-    plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100)
+    plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
