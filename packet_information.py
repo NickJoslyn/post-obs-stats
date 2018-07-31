@@ -31,12 +31,12 @@ cdict2 = {'red':   ((0.0, 0.0, 0.0),
 cmap = mcolors.LinearSegmentedColormap('my_colormap', cdict, 100)
 cmap2 = mcolors.LinearSegmentedColormap('my_colormap', cdict2, 100)
 
+TOTAL_COMPUTE_NODES = ['00', '01', '02', '03', '04', '05', '06', '07', '10', '11', '12', '13', '14', '15', '16', '17', '18', '20', '21', '22', '23', '24', '25', '26', '27', '30', '31', '32', '33', '34', '35', '36', '37']
 
 numberOfNodes = 8
-TOTAL_COMPUTE_NODES = ['00', '01', '02', '03', '04', '05', '06', '07', '10', '11', '12', '13', '14', '15', '16', '17', '18', '20', '21', '22', '23', '24', '25', '26', '27', '30', '31', '32', '33', '34', '35', '36', '37']
-ACTIVE_COMPUTE_NODES = []
 SESSION_IDENTIFIER = "AGBT18A_999_122"
 
+ACTIVE_COMPUTE_NODES = []
 for i in TOTAL_COMPUTE_NODES:
     temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/dibas/*", shell = True).split()
     if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas/' + SESSION_IDENTIFIER))):
@@ -44,14 +44,23 @@ for i in TOTAL_COMPUTE_NODES:
 
 ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
 
-numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
+################################################################################
+### Generic
+computeNodeNames = ACTIVE_COMPUTE_NODES.reshape(-1)
 
 numberOfBanks = ACTIVE_COMPUTE_NODES.shape[0]
+
+numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
+
+scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
+scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
+
+timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
+timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
 ################################################################################
 ### NETBUFST
 NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
-computeNodeNames = []
 
 for bank in range(numberOfBanks):
     print("Analyzing NETBUFST for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
@@ -62,13 +71,6 @@ for bank in range(numberOfBanks):
         except:
             NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
             print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
-        computeNodeNames.append('blc' + str(ACTIVE_COMPUTE_NODES[bank,node]))
-
-scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
-scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
-
-timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
-timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
 fig = plt.figure(figsize=(12,10))
 plt.gcf().subplots_adjust(bottom = 0.2)
@@ -99,8 +101,8 @@ pos1 = ax1.get_position()
 ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
 plt.draw()
 #plt.tight_layout(rect=[0, 0.03, 1, 0.90])
-plt.savefig("testfinal.png", bbox_inches = 'tight')
-plt.show()
+plt.savefig(("NETBUFST/" + str(SESSION_IDENTIFIER) + ".png"), bbox_inches = 'tight')
+plt.close()
 ################################################################################
 ### NDROP
 NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
@@ -114,19 +116,32 @@ for bank in range(numberOfBanks):
             NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
             print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-plt.title("Percentage of Packets Dropped: " + SESSION_IDENTIFIER)
-plt.imshow(NDROP_waterfall, cmap = cmap)
-plt.colorbar()
-plt.clim(0,100)
-#plt.ylabel("Source")
-#plt.xlabel("Compute Node")
-plt.tick_params(labelright = True)
-plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
-plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
-plt.tight_layout()
-plt.show()
+fig = plt.figure(figsize=(12,10))
+plt.gcf().subplots_adjust(bottom = 0.2)
+ax1 = fig.add_subplot(111)
+plt.suptitle("Percentage of Packets Dropped: " + SESSION_IDENTIFIER)
+im = ax1.imshow(NDROP_waterfall, cmap = cmap)
+plt.colorbar(im, fraction = 0.025, pad = 0.09)
+im.set_clim(0,100)
 
+ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
+ax1.set_yticklabels(computeNodeNames)
+ax1.set_xticks(np.arange(numberOfScans))
+ax1.set_xticklabels(scanNames, rotation = 90)
+ax1.tick_params(labelright = True, right = True, top = True, labeltop = False)
 
+ax2 = fig.add_axes(ax1.get_position(), frameon = False)
+ax2.tick_params(labelbottom = 'off', top = 'off', labeltop = 'on', labelleft = 'off', labelright = 'off', bottom = 'off', left = 'off', right = 'off')
+ax2.set_xlim(ax1.get_xlim())
+ax2.set_xticks(np.arange(numberOfScans))
+ax2.set_xticklabels(timeStamps, rotation = 90)
+
+plt.draw()
+pos1 = ax1.get_position()
+ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
+plt.draw()
+plt.savefig(("NDROP/" + str(SESSION_IDENTIFIER) + ".png"), bbox_inches = 'tight')
+plt.close()
 
 ################################################################################
 ### PKTIDX
@@ -141,14 +156,31 @@ for bank in range(numberOfBanks):
             PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
             print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-plt.title("Percentage of Blocks Dropped: " + SESSION_IDENTIFIER)
-plt.imshow(PKTIDX_waterfall, cmap = cmap2)
-plt.colorbar()
-plt.clim(0,100)
-#plt.ylabel("Source")
-#plt.xlabel("Compute Node")
-plt.tick_params(labelright = True)
-plt.yticks(np.arange(numberOfBanks*numberOfNodes), computeNodeNames)
-plt.xticks(np.arange(numberOfScans), scanNames, rotation = 90)
-plt.tight_layout()
-plt.show()
+
+
+fig = plt.figure(figsize=(12,10))
+plt.gcf().subplots_adjust(bottom = 0.2)
+ax1 = fig.add_subplot(111)
+plt.suptitle("Percentage of Blocks Dropped: " + SESSION_IDENTIFIER)
+im = ax1.imshow(PKTIDX_waterfall, cmap = cmap2)
+plt.colorbar(im, fraction = 0.025, pad = 0.09)
+im.set_clim(0,100)
+
+ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
+ax1.set_yticklabels(computeNodeNames)
+ax1.set_xticks(np.arange(numberOfScans))
+ax1.set_xticklabels(scanNames, rotation = 90)
+ax1.tick_params(labelright = True, right = True, top = True, labeltop = False)
+
+ax2 = fig.add_axes(ax1.get_position(), frameon = False)
+ax2.tick_params(labelbottom = 'off', top = 'off', labeltop = 'on', labelleft = 'off', labelright = 'off', bottom = 'off', left = 'off', right = 'off')
+ax2.set_xlim(ax1.get_xlim())
+ax2.set_xticks(np.arange(numberOfScans))
+ax2.set_xticklabels(timeStamps, rotation = 90)
+
+plt.draw()
+pos1 = ax1.get_position()
+ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
+plt.draw()
+plt.savefig(("PKTIDX/" + str(SESSION_IDENTIFIER) + ".png"), bbox_inches = 'tight')
+plt.close()
