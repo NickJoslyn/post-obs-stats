@@ -107,7 +107,7 @@ if __name__ == "__main__":
                 NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                 print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-    plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24):
+    plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24)
 
     ################################################################################
     ### NDROP
@@ -122,8 +122,7 @@ if __name__ == "__main__":
                 NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                 print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-    plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100):
-
+    plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100)
 
     ################################################################################
     ### PKTIDX
@@ -138,4 +137,4 @@ if __name__ == "__main__":
                 PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                 print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-    plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100):
+    plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100)
