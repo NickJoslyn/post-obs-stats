@@ -6,6 +6,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.colors as mcolors
 
 cdict = {'red':   ((0.0, 0.0, 0.0),
@@ -71,9 +72,11 @@ timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n'
 
 fig = plt.figure(figsize=(12,10))
 ax1 = fig.add_subplot(111)
-#plt.suptitle("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
+plt.suptitle("Max Location in Memory Ring Buffer: " + SESSION_IDENTIFIER)
 im = ax1.imshow(NETBUFST_waterfall, cmap = cmap)
-plt.colorbar(im)
+divider = make_axes_locatable(ax1)
+cax = divider.append_axes('right', size = '5%', pad = 5)
+plt.colorbar(im, cax=cax4, orientation = 'vertical')
 im.set_clim(0,24)
 
 ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
