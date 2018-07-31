@@ -41,7 +41,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     maxindex2 = np.unravel_index(np.argmax(packet_data, axis=None), packet_data.shape)[1]
 
     maxNode = computeNodeNames[maxindex1]
-    maxTime = timeStamps[maxindex1]
+    maxTime = timeStamps[maxindex2]
     maxValue = packet_data[maxindex1, maxindex2]
     numberOfDanger = round(100*(len(np.where(packet_data > dangerLim)[0])/totalLength),2)
     numberOfCritical = round(100*(len(np.where(packet_data > criticalLim)[0])/totalLength),2)
@@ -54,8 +54,8 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     clb = plt.colorbar(im, fraction = 0.025, pad = 0.09)
     #clb.ax.set_title("blc max = 24\nblc min = 0")
     im.set_clim(0,topClim)
-    textForPlot = "Max: blc" + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
-    ax1.text(1, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
+    textForPlot = "Max: " + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
+    ax1.text(1.04, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
 
     ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
     ax1.set_yticklabels(computeNodeNames)
