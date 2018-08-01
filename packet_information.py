@@ -82,7 +82,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     ax2.set_xticklabels(timeStamps, rotation = 90)
     plt.draw()
     pos1 = ax1.get_position()
-    ax2.set_position([pos1.x0, pos1.y0-0.02, pos1.width, pos1.height])
+    ax2.set_position([pos1.x0, pos1.y0, pos1.width, pos1.height])
     plt.draw()
 
     # Save to relevant folders
@@ -232,32 +232,32 @@ if __name__ == "__main__":
 
         plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24, 12, 20)
 
+        ###############################################################################
+        ## NDROP
+        NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+        for bank in range(numberOfBanks):
+            print("Analyzing NDROP for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                NDROP_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
+                try:
+                    NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
+                except:
+                    NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+
+        plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
+
         ################################################################################
-        ### NDROP
-        # NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
-        # for bank in range(numberOfBanks):
-        #     print("Analyzing NDROP for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
-        #     for node in range(numberOfNodes):
-        #         NDROP_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
-        #         try:
-        #             NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
-        #         except:
-        #             NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
-        #             print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
-        #
-        # plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
-        #
-        # ################################################################################
-        # ### PKTIDX
-        # PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
-        # for bank in range(numberOfBanks):
-        #     print("Analyzing PKTIDX for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
-        #     for node in range(numberOfNodes):
-        #         PKTIDX_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
-        #         try:
-        #             PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
-        #         except:
-        #             PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
-        #             print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
-        #
-        # plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
+        ### PKTIDX
+        PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+        for bank in range(numberOfBanks):
+            print("Analyzing PKTIDX for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                PKTIDX_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
+                try:
+                    PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
+                except:
+                    PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+
+        plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
