@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
         scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
         scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
-
+        print(scanNames)
         timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
         timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
