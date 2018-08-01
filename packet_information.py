@@ -94,84 +94,168 @@ if __name__ == "__main__":
 
     # Command Line Arguments
     parser = ArgumentParser(description="Creates waterfall plots showing packet diagnostics from a GBT observation.")
-    parser.add_argument('-s', action='store',  default='', dest='session_name', type=str,
+    parser.add_argument('-s', action='store', default='', dest='session_name', type=str,
                         help="Session name. Default: Last created dibas directory in first compute node of /home/obs/triggers/hosts_running")
-    parser.add_argument('-b', action='store',  default=8, dest='nodes_in_bank', type=int,
+    parser.add_argument('-b', action='store', default=8, dest='nodes_in_bank', type=int,
                         help="Nodes per bank. Program assumes total number of compute nodes is multiple of this value. Default: 8 (unlikely to change from default)")
+    parser.add_argument('-o', action='store', default='No', dest='old_session_date', type=str,
+                        help="Date of non-current observation (YYYMMDD). Only use if desired session is not from this semester. MUST specify session name. Default: 'No'")
+
     parse_args = parser.parse_args()
 
     #Initialize
     SESSION_IDENTIFIER = parse_args.session_name
     numberOfNodes = parse_args.nodes_in_bank
+    DATE_STRING = parse_args.old_session_date
 
-    ################################################################################
-    ### Generic
-    ACTIVE_COMPUTE_NODES = []
-    for i in TOTAL_COMPUTE_NODES:
-        temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/dibas/*", shell = True).split()
-        if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas/' + SESSION_IDENTIFIER))):
-            ACTIVE_COMPUTE_NODES.append(i)
 
-    ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
+    if (DATE_STRING != 'No'):
 
-    computeNodeNames = []
-    for i in ACTIVE_COMPUTE_NODES.reshape(-1):
-        computeNodeNames.append('blc' + str(i))
+        # add default find of session
 
-    numberOfBanks = ACTIVE_COMPUTE_NODES.shape[0]
+        ################################################################################
+        ### Generic
+        ACTIVE_COMPUTE_NODES = []
+        for i in TOTAL_COMPUTE_NODES:
+            temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/dibas/*", shell = True).split()
+            if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas/' + SESSION_IDENTIFIER))):
+                ACTIVE_COMPUTE_NODES.append(i)
 
-    numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
+        ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
 
-    scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
-    scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
+        computeNodeNames = []
+        for i in ACTIVE_COMPUTE_NODES.reshape(-1):
+            computeNodeNames.append('blc' + str(i))
 
-    timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
-    timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
+        numberOfBanks = ACTIVE_COMPUTE_NODES.shape[0]
 
-    totalLength = numberOfBanks * numberOfNodes * numberOfScans
+        numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
 
-    ################################################################################
-    ### NETBUFST
-    NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+        scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
+        scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
 
-    for bank in range(numberOfBanks):
-        print("Analyzing NETBUFST for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
-        for node in range(numberOfNodes):
-            NETBUFST_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk 'BEGIN {max = 0} {if ($1 > max) max = $1} END {print max}'; done"""
-            try:
-                NETBUFST_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
-            except:
-                NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
-                print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+        timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
+        timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
-    plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24, 12, 20)
+        totalLength = numberOfBanks * numberOfNodes * numberOfScans
 
-    ################################################################################
-    ### NDROP
-    NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
-    for bank in range(numberOfBanks):
-        print("Analyzing NDROP for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
-        for node in range(numberOfNodes):
-            NDROP_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
-            try:
-                NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
-            except:
-                NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
-                print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+        ################################################################################
+        ### NETBUFST
+        NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 
-    plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
+        for bank in range(numberOfBanks):
+            print("Analyzing NETBUFST for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                NETBUFST_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk 'BEGIN {max = 0} {if ($1 > max) max = $1} END {print max}'; done"""
+                try:
+                    NETBUFST_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
+                except:
+                    NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-    ################################################################################
-    ### PKTIDX
-    PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
-    for bank in range(numberOfBanks):
-        print("Analyzing PKTIDX for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
-        for node in range(numberOfNodes):
-            PKTIDX_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
-            try:
-                PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
-            except:
-                PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
-                print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+        plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24, 12, 20)
 
-    plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
+        ################################################################################
+        ### NDROP
+        NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+        for bank in range(numberOfBanks):
+            print("Analyzing NDROP for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                NDROP_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
+                try:
+                    NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
+                except:
+                    NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+
+        plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
+
+        ################################################################################
+        ### PKTIDX
+        PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+        for bank in range(numberOfBanks):
+            print("Analyzing PKTIDX for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                PKTIDX_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
+                try:
+                    PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
+                except:
+                    PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+
+        plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
+
+
+    else:
+
+        ################################################################################
+        ### Generic
+        ACTIVE_COMPUTE_NODES = []
+        for i in TOTAL_COMPUTE_NODES:
+            temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/*", shell = True).split()
+            if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas.' + DATE_STRING + "/" + SESSION_IDENTIFIER))):
+                ACTIVE_COMPUTE_NODES.append(i)
+
+        ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
+
+        computeNodeNames = []
+        for i in ACTIVE_COMPUTE_NODES.reshape(-1):
+            computeNodeNames.append('blc' + str(i))
+
+        numberOfBanks = ACTIVE_COMPUTE_NODES.shape[0]
+
+        numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas." + DATE_STRING + "/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
+
+        scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
+        scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
+
+        timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
+        timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
+
+        totalLength = numberOfBanks * numberOfNodes * numberOfScans
+
+        ################################################################################
+        ### NETBUFST
+        NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+
+        for bank in range(numberOfBanks):
+            print("Analyzing NETBUFST for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                NETBUFST_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NETBUFST | awk '{print substr($2,2, index($2,"/")-2)}' | awk 'BEGIN {max = 0} {if ($1 > max) max = $1} END {print max}'; done"""
+                try:
+                    NETBUFST_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NETBUFST_command, shell=True)[:-1].split("\n")
+                except:
+                    NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+
+        plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24, 12, 20)
+
+        ################################################################################
+        ### NDROP
+        NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+        for bank in range(numberOfBanks):
+            print("Analyzing NDROP for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                NDROP_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep NDROP | awk '{print $3}' | sort | uniq -c | awk '{print $1 * $2}' | awk '{total += $1} END {print 100*(total/(NR*16384))}'; done"""
+                try:
+                    NDROP_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(NDROP_command, shell=True)[:-1].split("\n")
+                except:
+                    NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+
+        plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
+
+        ################################################################################
+        ### PKTIDX
+        PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
+        for bank in range(numberOfBanks):
+            print("Analyzing PKTIDX for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
+            for node in range(numberOfNodes):
+                PKTIDX_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[bank,node]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP""" + str(bank) + str(node) + """/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep PKTIDX | awk '{print $3 - p; p = $3}' | sort | uniq -c | awk 'BEGIN{sum=0; number = 0}{number += $1}{if ($2>16384) sum += $1 * ($2/16384 - 1)} END {print sum/number*100}'; done"""
+                try:
+                    PKTIDX_waterfall[(bank*numberOfNodes + node), :] = subprocess.check_output(PKTIDX_command, shell=True)[:-1].split("\n")
+                except:
+                    PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
+                    print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
+
+        plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
