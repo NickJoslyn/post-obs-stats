@@ -54,8 +54,8 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     maxNode = computeNodeNames[maxindex1]
     maxTime = timeStamps[maxindex2]
     maxValue = round(packet_data[maxindex1, maxindex2],2)
-    numberOfDanger = round(100*(len(np.where(packet_data > dangerLim)[0])/totalLength),2)
-    numberOfCritical = round(100*(len(np.where(packet_data > criticalLim)[0])/totalLength),2)
+    numberOfDanger = round(100*(len(np.where(packet_data > dangerLim)[0])/float(totalLength)),2)
+    numberOfCritical = round(100*(len(np.where(packet_data > criticalLim)[0])/float(totalLength)),2)
 
     # Begin figure
     fig = plt.figure(figsize=(12,10))
@@ -206,13 +206,10 @@ if __name__ == "__main__":
 
         numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas." + DATE_STRING + "/" + SESSION_IDENTIFIER + "/GUPPI/BLP00/*gpuspec..headers | wc -l",shell=True)[:-1])
 
-                            ls /mnt_blc00/datax/dibas.20180720/AGBT18A_999_115/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, index($1, "BLP"), index($1,".gpuspec"))}' | awk '{print substr($1, 31, index($1, ".gpuspec") - 36)}'
-
-
         scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*.gpuspec..headers | awk '{print substr($1, index($1, "BLP"), index($1,".gpuspec"))}' | awk '{print substr($1, 31, index($1, ".gpuspec") - 36)}'"""
         scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
-        print(scanNames)
-        timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
+        
+	timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/BLP00/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
         timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
         totalLength = numberOfBanks * numberOfNodes * numberOfScans
