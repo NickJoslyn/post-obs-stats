@@ -82,7 +82,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     ax2.set_xticklabels(timeStamps, rotation = 90)
     plt.draw()
     pos1 = ax1.get_position()
-    ax2.set_position([pos1.x0, pos1.y0-0.042, pos1.width, pos1.height])
+    ax2.set_position([pos1.x0, pos1.y0-0.02, pos1.width, pos1.height])
     plt.draw()
 
     # Save to relevant folders
