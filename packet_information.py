@@ -112,7 +112,9 @@ if __name__ == "__main__":
     if (DATE_STRING == 'No'):
 
         # add default find of session
-
+        if (SESSION_IDENTIFIER == ''):
+            string_for_session = 'ls -trd /mnt_blc' + subprocess.check_output(['cat', '/home/obs/triggers/hosts_running']).replace('blc','').split()[0] + '/datax/dibas/* | tail -1'
+            SESSION_IDENTIFIER = subprocess.check_output(string_for_session, shell = True)[23:-1]
         ################################################################################
         ### Generic
         ACTIVE_COMPUTE_NODES = []
