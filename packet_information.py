@@ -93,7 +93,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
 if __name__ == "__main__":
 
     # Command Line Arguments
-    parser = ArgumentParser(description="Creates waterfall plots showing packet diagnostics from a GBT observation.")
+    parser = ArgumentParser(description="Creates waterfall plots showing packet diagnostics from a GBT observation. Plots are saved to NETBUFST, NDROP, and PKTIDX directories.")
     parser.add_argument('-s', action='store', default='', dest='session_name', type=str,
                         help="Session name. Default: Last created dibas directory in first compute node of /home/obs/triggers/hosts_running")
     parser.add_argument('-b', action='store', default=8, dest='nodes_in_bank', type=int,
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     DATE_STRING = parse_args.old_session_date
 
 
-    if (DATE_STRING != 'No'):
+    if (DATE_STRING == 'No'):
 
         # add default find of session
 
@@ -193,7 +193,7 @@ if __name__ == "__main__":
         ACTIVE_COMPUTE_NODES = []
         for i in TOTAL_COMPUTE_NODES:
             temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/*", shell = True).split()
-            if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas.' + DATE_STRING + "/" + SESSION_IDENTIFIER))):
+            if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas.' + DATE_STRING))):
                 ACTIVE_COMPUTE_NODES.append(i)
 
         ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
