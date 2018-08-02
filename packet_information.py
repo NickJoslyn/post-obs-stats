@@ -93,7 +93,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
 if __name__ == "__main__":
 
     # Command Line Arguments
-    parser = ArgumentParser(description="Creates waterfall plots showing packet diagnostics from a GBT observation. Plots are saved to NETBUFST, NDROP, and PKTIDX directories.")
+    parser = ArgumentParser(description="Creates waterfall plots showing packet diagnostics from a GBT observation. Plots are saved to NETBUFST, NDROP, and PKTIDX directories. Run from storage node (or similar location with all compute nodes mounted)")
     parser.add_argument('-s', action='store', default='', dest='session_name', type=str,
                         help="Session name. Default: Last created dibas directory in first compute node of /home/obs/triggers/hosts_running")
     parser.add_argument('-b', action='store', default=8, dest='nodes_in_bank', type=int,
@@ -113,15 +113,21 @@ if __name__ == "__main__":
 
         # add default find of session
         if (SESSION_IDENTIFIER == ''):
-            string_for_session = 'ls -trd /mnt_blc' + subprocess.check_output(['cat', '/home/obs/triggers/hosts_running']).replace('blc','').split()[0] + '/datax/dibas/* | tail -1'
+            first_active_node = subprocess.check_output(['cat', '/home/obs/triggers/hosts_running']).replace('blc','').split()[0]
+            test_if_any_sessions = "ls -tr /mnt_blc" + first_active_node + "/datax/dibas"
+            if (subprocess.check_output(test_if_any_sessions, shell = True)[:-1] == ''):
+                print("No sessions in first active node given by hosts_running trigger")
+                quit()
+            string_for_session = 'ls -trd /mnt_blc' + first_active_node + '/datax/dibas/* | tail -1'
             SESSION_IDENTIFIER = subprocess.check_output(string_for_session, shell = True)[23:-1]
         ################################################################################
         ### Generic
         ACTIVE_COMPUTE_NODES = []
         for i in TOTAL_COMPUTE_NODES:
-            temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/dibas/*", shell = True).split()
-            if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas/' + SESSION_IDENTIFIER))):
-                ACTIVE_COMPUTE_NODES.append(i)
+            if (subprocess.check_output("ls -tr /mnt_blc" + str(i) + "/datax/dibas", shell = True)[:-1] != ''):
+                temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/dibas/*", shell = True).split()
+                if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas/' + SESSION_IDENTIFIER))):
+                    ACTIVE_COMPUTE_NODES.append(i)
 
         ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
 
@@ -211,7 +217,7 @@ if __name__ == "__main__":
         scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/*/*.gpuspec..headers | awk '{print substr($1, index($1, "BLP"), index($1,".gpuspec"))}' | awk '{print substr($1, 31, index($1, ".gpuspec") - 36)}'"""
         scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
 
-	timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/*/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
+        timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/*/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
         timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
         totalLength = numberOfBanks * numberOfNodes * numberOfScans
