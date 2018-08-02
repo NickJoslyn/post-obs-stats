@@ -12,7 +12,7 @@ Run this program from a storage node (**_or any node with all compute nodes -- i
 
 ---
 
-```python
+```
 >>> python packet_information.py -h
 
 usage: packet_information.py [-h] [-s SESSION_NAME] [-b NODES_IN_BANK]
@@ -37,7 +37,7 @@ The defaults are set to run the analysis on the most recent observation.
 
 (The most recent observation is determined by running the active_hosts trigger and using the last modified directory in the active compute node's dibas directory.)
 
-```python
+```
 >>> python packet_information.py
 Analyzing NETBUFST for blc0*
 Analyzing NDROP for blc0*
@@ -46,7 +46,7 @@ Analyzing PKTIDX for blc0*
 
 To run on an archived session (i.e. dibas.YYYYMMDD/ instead of dibas/), the date AND session must be specified.
 
-```python
+```
 >>> python packet_information.py -s AGBT18A_999_53 -o 20180503
 Analyzing NETBUFST for blc0*
 Analyzing NETBUFST for blc2*
