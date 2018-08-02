@@ -58,7 +58,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     numberOfCritical = round(100*(len(np.where(packet_data > criticalLim)[0])/float(totalLength)),2)
 
     # Begin figure
-    fig = plt.figure(figsize=(12,10))
+    fig = plt.figure(figsize=(25,15))
     plt.gcf().subplots_adjust(bottom = 0.2)
     ax1 = fig.add_subplot(111)
     plt.suptitle(title_identifier + SESSION_IDENTIFIER)
