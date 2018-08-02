@@ -2,12 +2,14 @@
 # Breakthrough Listen UC Berkeley SETI Intern 2018
 # Creates waterfall plots detailing packet information during a GBT observation.
 
+# Imports
 import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
 import matplotlib.colors as mcolors
 from argparse import ArgumentParser
 
+# Green to Red colormaps for waterfall plots
 cdict = {'red':   ((0.0, 0.0, 0.0),
                    (0.5, 0.0, 0.0),
                    (1.0, 1.0, 1.0)),
@@ -30,6 +32,7 @@ cdict2 = {'red':   ((0.0, 0.0, 0.0),
 cmap = mcolors.LinearSegmentedColormap('my_colormap', cdict, 100)
 cmap2 = mcolors.LinearSegmentedColormap('my_colormap', cdict2, 100)
 
+# All compute nodes at GB. Add to/subtract from as necessary
 TOTAL_COMPUTE_NODES = ['00', '01', '02', '03', '04', '05', '06', '07', '10', '11', '12', '13', '14', '15', '16', '17', '18', '20', '21', '22', '23', '24', '25', '26', '27', '30', '31', '32', '33', '34', '35', '36', '37']
 
 def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, topClim, dangerLim, criticalLim):
@@ -68,6 +71,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     textForPlot = "Max: " + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
     ax1.text(1.02, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
 
+    # Set up left, right, and bottom axes
     ax1.set_yticks(np.arange(numberOfBanks*numberOfNodes))
     ax1.set_yticklabels(computeNodeNames)
     ax1.set_xticks(np.arange(numberOfScans))
@@ -108,40 +112,46 @@ if __name__ == "__main__":
     numberOfNodes = parse_args.nodes_in_bank
     DATE_STRING = parse_args.old_session_date
 
-
+    # If user doesn't specify a date (i.e. not using archived dibas data)
     if (DATE_STRING == 'No'):
 
-        # add default find of session
+        # If using default, find the session of first active node as returned by hosts_running trigger
         if (SESSION_IDENTIFIER == ''):
             first_active_node = subprocess.check_output(['cat', '/home/obs/triggers/hosts_running']).replace('blc','').split()[0]
             test_if_any_sessions = "ls -tr /mnt_blc" + first_active_node + "/datax/dibas"
+
             if (subprocess.check_output(test_if_any_sessions, shell = True)[:-1] == ''):
                 print("No sessions in first active node given by hosts_running trigger")
                 quit()
+
             string_for_session = 'ls -trd /mnt_blc' + first_active_node + '/datax/dibas/* | tail -1'
             SESSION_IDENTIFIER = subprocess.check_output(string_for_session, shell = True)[23:-1]
+
         ################################################################################
         ### Generic
+
+        # Find the compute nodes used during the specified session
         ACTIVE_COMPUTE_NODES = []
         for i in TOTAL_COMPUTE_NODES:
             if (subprocess.check_output("ls -tr /mnt_blc" + str(i) + "/datax/dibas", shell = True)[:-1] != ''):
                 temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/dibas/*", shell = True).split()
                 if (np.any(np.array(temp) == ('/mnt_blc' + str(i) + '/datax/dibas/' + SESSION_IDENTIFIER))):
                     ACTIVE_COMPUTE_NODES.append(i)
-
         ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
 
+        # Names of nodes for graphing
         computeNodeNames = []
         for i in ACTIVE_COMPUTE_NODES.reshape(-1):
             computeNodeNames.append('blc' + str(i))
 
         numberOfBanks = ACTIVE_COMPUTE_NODES.shape[0]
 
+        # Find the scan/target names
         numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas/" + SESSION_IDENTIFIER + "/GUPPI/*/*gpuspec..headers | wc -l",shell=True)[:-1])
-
         scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/*/*.gpuspec..headers | awk '{print substr($1, 75, index($1,".")-75)}'"""
         scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
 
+        # Find the initial time stamp of the scan
         timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas/""" + SESSION_IDENTIFIER + """/GUPPI/*/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
         timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
@@ -149,6 +159,8 @@ if __name__ == "__main__":
 
         ################################################################################
         ### NETBUFST
+        # Loop through and find max value in each scan for each compute node
+
         NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 
         for bank in range(numberOfBanks):
@@ -165,6 +177,8 @@ if __name__ == "__main__":
 
         ################################################################################
         ### NDROP
+        # Loop through and find average value in each scan for each compute node
+
         NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
         for bank in range(numberOfBanks):
             print("Analyzing NDROP for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
@@ -180,6 +194,8 @@ if __name__ == "__main__":
 
         ################################################################################
         ### PKTIDX
+        # Loop through and find average value in each scan for each compute node
+
         PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
         for bank in range(numberOfBanks):
             print("Analyzing PKTIDX for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
@@ -193,11 +209,13 @@ if __name__ == "__main__":
 
         plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
 
-
+    # If user specifies date, then use that date and session name to find the archived data
     else:
 
         ################################################################################
         ### Generic
+
+        # Find the compute nodes used during the specified session
         ACTIVE_COMPUTE_NODES = []
         for i in TOTAL_COMPUTE_NODES:
             temp = subprocess.check_output("ls -trd /mnt_blc" + str(i) + "/datax/*", shell = True).split()
@@ -206,17 +224,19 @@ if __name__ == "__main__":
 
         ACTIVE_COMPUTE_NODES = np.array(ACTIVE_COMPUTE_NODES).reshape(-1, numberOfNodes)
 
+        # Names of nodes for graphing
         computeNodeNames = []
         for i in ACTIVE_COMPUTE_NODES.reshape(-1):
             computeNodeNames.append('blc' + str(i))
 
         numberOfBanks = ACTIVE_COMPUTE_NODES.shape[0]
 
+        # Find the scan/target names
         numberOfScans = int(subprocess.check_output("ls /mnt_blc" + str(ACTIVE_COMPUTE_NODES[0,0]) + "/datax/dibas." + DATE_STRING + "/" + SESSION_IDENTIFIER + "/GUPPI/*/*gpuspec..headers | wc -l",shell=True)[:-1])
-
         scanName_command = """ls /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/*/*.gpuspec..headers | awk '{print substr($1, index($1, "BLP"), index($1,".gpuspec"))}' | awk '{print substr($1, 31, index($1, ".gpuspec") - 36)}'"""
         scanNames = subprocess.check_output(scanName_command, shell=True).split('\n')
 
+        # Find the initial time stamp of the scan
         timeStamp_command = """for i in /mnt_blc""" + str(ACTIVE_COMPUTE_NODES[0,0]) + """/datax/dibas.""" + DATE_STRING + "/" + SESSION_IDENTIFIER + """/GUPPI/*/*gpuspec..headers; do /usr/bin/fold -w80 $i | grep DAQPULSE | awk 'NR==1{print$5}'; done"""
         timeStamps = subprocess.check_output(timeStamp_command, shell = True).split('\n')[:-1]
 
@@ -224,6 +244,8 @@ if __name__ == "__main__":
 
         ################################################################################
         ### NETBUFST
+        # Loop through and find max value in each scan for each compute node
+
         NETBUFST_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
 
         for bank in range(numberOfBanks):
@@ -240,6 +262,8 @@ if __name__ == "__main__":
 
         ###############################################################################
         ## NDROP
+        # Loop through and find average value in each scan for each compute node
+
         NDROP_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
         for bank in range(numberOfBanks):
             print("Analyzing NDROP for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
@@ -255,6 +279,8 @@ if __name__ == "__main__":
 
         ################################################################################
         ### PKTIDX
+        # Loop through and find average value in each scan for each compute node
+
         PKTIDX_waterfall = np.zeros((numberOfBanks*numberOfNodes, numberOfScans))
         for bank in range(numberOfBanks):
             print("Analyzing PKTIDX for blc" + str(ACTIVE_COMPUTE_NODES[bank,0][0])+"*")
