@@ -6,7 +6,7 @@ After running blctl reduce (and it finishes) on a Breakthrough Listen Green Bank
 * The average percentage of packets dropped (NDROP)
 * The average percentage of blocks dropped (PKTIDX)
 
-** There must be NETBUFST, NDROP, and PKTIDX sub-directories in the same directory as the program.** These sub-directories are where the .png's are saved.
+**There must be NETBUFST, NDROP, and PKTIDX sub-directories in the same directory as the program.** These sub-directories are where the .png's are saved.
 
 Run this program from a storage node (**_or any node with all compute nodes -- include blc18 -- mounted_**)
 
