@@ -6,31 +6,36 @@ After running blctl reduce (and it finishes) on a Breakthrough Listen Green Bank
 * The average percentage of packets dropped (NDROP)
 * The average percentage of blocks dropped (PKTIDX)
 
-**There must be NETBUFST, NDROP, and PKTIDX sub-directories in the same directory as the program.** These sub-directories are where the .png's are saved.
+**Note:** If there is a white row in the waterfall, this is due to that compute node having a different number of gpuspec..headers files.
 
 Run this program from a storage node (**_or any node with all compute nodes -- include blc18 -- mounted_**)
 
 ---
 
 ```
->>> python packet_information.py -h
-
+>>>  python packet_information.py -h
 usage: packet_information.py [-h] [-s SESSION_NAME] [-b NODES_IN_BANK]
                              [-o OLD_SESSION_DATE]
+                             [-n DIRECTORY_NAMES DIRECTORY_NAMES DIRECTORY_NAMES]
 
 Creates waterfall plots showing packet diagnostics from a GBT observation.
-Plots are saved to NETBUFST, NDROP, and PKTIDX directories. Run from storage
-node (or similar location with all compute nodes mounted)
+Plots are saved to NETBUFST, NDROP, and PKTIDX directories by default. Run
+from storage node (or similar location with all compute nodes mounted)
+
 optional arguments:
-  -h, --help           show this help message and exit
-  -s SESSION_NAME      Session name. Default: Last created dibas directory in
-                       first compute node of /home/obs/triggers/hosts_running
-  -b NODES_IN_BANK     Nodes per bank. Program assumes total number of compute
-                       nodes is multiple of this value. Default: 8 (unlikely
-                       to change from default)
-  -o OLD_SESSION_DATE  Date of non-current observation (YYYMMDD). Only use if
-                       desired session is not from this semester. MUST specify
-                       session name. Default: 'No'
+  -h, --help            show this help message and exit
+  -s SESSION_NAME       Session name. Default: Last created dibas directory in
+                        first compute node of /home/obs/triggers/hosts_running
+  -b NODES_IN_BANK      Nodes per bank. Program assumes total number of
+                        compute nodes is multiple of this value. Default: 8
+                        (unlikely to change from default)
+  -o OLD_SESSION_DATE   Date of non-current observation (YYYMMDD). Only use if
+                        desired session is not from this semester. MUST
+                        specify session name. Default: 'No'
+  -n DIRECTORY_NAMES DIRECTORY_NAMES DIRECTORY_NAMES
+                        Directory names to store png's. Specify 3 locations.
+                        Default: 'NETBUFST NDROP PKTIDX'
+
 ```
 
 The defaults are set to run the analysis on the most recent observation.

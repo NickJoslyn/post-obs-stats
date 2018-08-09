@@ -108,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', action='store', default=['NETBUFST', 'NDROP', 'PKTIDX'], dest='directory_names', nargs = 3, type=str,
                         help="Directory names to store png's. Specify 3 locations. Default: 'NETBUFST NDROP PKTIDX'")
 
-    # Initialize 
+    # Initialize
     parse_args = parser.parse_args()
     SESSION_IDENTIFIER = parse_args.session_name
     numberOfNodes = parse_args.nodes_in_bank
