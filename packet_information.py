@@ -69,7 +69,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     im = ax1.imshow(packet_data, cmap = colormap, aspect='auto')
     clb = plt.colorbar(im, fraction = 0.025, pad = 0.09)
     im.set_clim(0,topClim)
-    textForPlot = "Max: " + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" str(apprehensionLim) + ": " + str(numberOfApprehension)+ "%\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
+    textForPlot = "Max: " + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" + str(apprehensionLim) + ": " + str(numberOfApprehension)+ "%\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
     ax1.text(1.02, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
 
     # Set up left, right, and bottom axes
@@ -98,22 +98,22 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
 if __name__ == "__main__":
 
     # Command Line Arguments
-    parser = ArgumentParser(description="Creates waterfall plots showing packet diagnostics from a GBT observation. Plots are saved to NETBUFST, NDROP, and PKTIDX directories. Run from storage node (or similar location with all compute nodes mounted)")
+    parser = ArgumentParser(description="Creates waterfall plots showing packet diagnostics from a GBT observation. Plots are saved to NETBUFST, NDROP, and PKTIDX directories by default. Run from storage node (or similar location with all compute nodes mounted)")
     parser.add_argument('-s', action='store', default='', dest='session_name', type=str,
                         help="Session name. Default: Last created dibas directory in first compute node of /home/obs/triggers/hosts_running")
     parser.add_argument('-b', action='store', default=8, dest='nodes_in_bank', type=int,
                         help="Nodes per bank. Program assumes total number of compute nodes is multiple of this value. Default: 8 (unlikely to change from default)")
     parser.add_argument('-o', action='store', default='No', dest='old_session_date', type=str,
                         help="Date of non-current observation (YYYMMDD). Only use if desired session is not from this semester. MUST specify session name. Default: 'No'")
-    parser.add_argument('-n', action='store', default='NETBUFST NDROP PKTIDX', dest='directory_names', type=str,
-                        help="Directory names to store png's. Default: 'NETBUFST NDROP PKTIDX'")
+    parser.add_argument('-n', action='store', default=['NETBUFST', 'NDROP', 'PKTIDX'], dest='directory_names', nargs = 3, type=str,
+                        help="Directory names to store png's. Specify 3 locations. Default: 'NETBUFST NDROP PKTIDX'")
 
-    #Initialize
+    # Initialize 
+    parse_args = parser.parse_args()
     SESSION_IDENTIFIER = parse_args.session_name
     numberOfNodes = parse_args.nodes_in_bank
     DATE_STRING = parse_args.old_session_date
     DIRECTORY_NAMES = parse_args.directory_names
-    DIRECTORY_NAMES = DIRECTORY_NAMES.split()
 
     # Make folder for .png's if it doesn't exist
     for individualDirectory in DIRECTORY_NAMES:
