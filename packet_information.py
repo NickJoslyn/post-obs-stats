@@ -35,7 +35,7 @@ cmap2 = mcolors.LinearSegmentedColormap('my_colormap', cdict2, 100)
 # All compute nodes at GB. Add to/subtract from as necessary
 TOTAL_COMPUTE_NODES = ['00', '01', '02', '03', '04', '05', '06', '07', '10', '11', '12', '13', '14', '15', '16', '17', '18', '20', '21', '22', '23', '24', '25', '26', '27', '30', '31', '32', '33', '34', '35', '36', '37']
 
-def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, topClim, dangerLim, criticalLim):
+def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, topClim, apprehensionLim, dangerLim, criticalLim):
     """
     Save the waterfall plot for NETBUFST, NDROP, and PKTIDX to the corresponding directory.
 
@@ -57,6 +57,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     maxNode = computeNodeNames[maxindex1]
     maxTime = timeStamps[maxindex2]
     maxValue = round(packet_data[maxindex1, maxindex2],2)
+    numberOfApprehension = round(100*(len(np.where(packet_data > apprehensionLim)[0])/float(totalLength)),2)
     numberOfDanger = round(100*(len(np.where(packet_data > dangerLim)[0])/float(totalLength)),2)
     numberOfCritical = round(100*(len(np.where(packet_data > criticalLim)[0])/float(totalLength)),2)
 
@@ -68,7 +69,7 @@ def plotting_packet_info(packet_data, title_identifier, colormap, type_to_plot, 
     im = ax1.imshow(packet_data, cmap = colormap, aspect='auto')
     clb = plt.colorbar(im, fraction = 0.025, pad = 0.09)
     im.set_clim(0,topClim)
-    textForPlot = "Max: " + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
+    textForPlot = "Max: " + str(maxNode) + " | " + str(maxTime) + " | " + str(maxValue) + "\n>" str(apprehensionLim) + ": " + str(numberOfApprehension)+ "%\n>" + str(dangerLim) + ": " + str(numberOfDanger) + "%\n>" + str(criticalLim) + ": " + str(numberOfCritical) + "%"
     ax1.text(1.02, 1.1, textForPlot, verticalalignment = 'center', transform = ax1.transAxes)
 
     # Set up left, right, and bottom axes
@@ -104,13 +105,20 @@ if __name__ == "__main__":
                         help="Nodes per bank. Program assumes total number of compute nodes is multiple of this value. Default: 8 (unlikely to change from default)")
     parser.add_argument('-o', action='store', default='No', dest='old_session_date', type=str,
                         help="Date of non-current observation (YYYMMDD). Only use if desired session is not from this semester. MUST specify session name. Default: 'No'")
-
-    parse_args = parser.parse_args()
+    parser.add_argument('-n', action='store', default='NETBUFST NDROP PKTIDX', dest='directory_names', type=str,
+                        help="Directory names to store png's. Default: 'NETBUFST NDROP PKTIDX'")
 
     #Initialize
     SESSION_IDENTIFIER = parse_args.session_name
     numberOfNodes = parse_args.nodes_in_bank
     DATE_STRING = parse_args.old_session_date
+    DIRECTORY_NAMES = parse_args.directory_names
+    DIRECTORY_NAMES = DIRECTORY_NAMES.split()
+
+    # Make folder for .png's if it doesn't exist
+    for individualDirectory in DIRECTORY_NAMES:
+        if (int(subprocess.check_output("find -maxdepth 1 -type d -name " + individualDirectory + " | wc -l", shell=True)) == 0):
+            subprocess.Popen("mkdir " + individualDirectory, shell=True)
 
     # If user doesn't specify a date (i.e. not using archived dibas data)
     if (DATE_STRING == 'No'):
@@ -173,7 +181,7 @@ if __name__ == "__main__":
                     NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                     print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-        plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24, 12, 20)
+        plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, DIRECTORY_NAMES[0], 24, 6, 12, 18)
 
         ################################################################################
         ### NDROP
@@ -190,7 +198,7 @@ if __name__ == "__main__":
                     NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                     print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-        plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
+        plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, DIRECTORY_NAMES[1], 100, 25, 50, 75)
 
         ################################################################################
         ### PKTIDX
@@ -207,7 +215,7 @@ if __name__ == "__main__":
                     PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                     print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-        plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
+        plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, DIRECTORY_NAMES[2], 100, 25, 50, 75)
 
     # If user specifies date, then use that date and session name to find the archived data
     else:
@@ -258,7 +266,7 @@ if __name__ == "__main__":
                     NETBUFST_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                     print("NETBUFST Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-        plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, "NETBUFST", 24, 12, 20)
+        plotting_packet_info(NETBUFST_waterfall, "Max Location in Memory Ring Buffer: ", cmap, DIRECTORY_NAMES[0], 24, 6, 12, 18)
 
         ###############################################################################
         ## NDROP
@@ -275,7 +283,7 @@ if __name__ == "__main__":
                     NDROP_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                     print("NDROP Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-        plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, "NDROP", 100, 50, 75)
+        plotting_packet_info(NDROP_waterfall, "Percentage of Packets Dropped: ", cmap, DIRECTORY_NAMES[1], 100, 25, 50, 75)
 
         ################################################################################
         ### PKTIDX
@@ -292,4 +300,4 @@ if __name__ == "__main__":
                     PKTIDX_waterfall[(bank*numberOfNodes + node), :] = -float('Inf')
                     print("PKTIDX Problem with " + str(ACTIVE_COMPUTE_NODES[bank,node]))
 
-        plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, "PKTIDX", 100, 50, 75)
+        plotting_packet_info(PKTIDX_waterfall, "Percentage of Blocks Dropped: ", cmap2, DIRECTORY_NAMES[2], 100, 25, 50, 75)
